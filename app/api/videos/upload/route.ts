@@ -5,6 +5,10 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
 
+// Allowed video file extensions
+const ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v']
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -23,6 +27,23 @@ export async function POST(req: Request) {
       )
     }
 
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File size exceeds 100MB limit' },
+        { status: 400 }
+      )
+    }
+
+    // Validate file extension
+    const originalExt = path.extname(file.name).toLowerCase()
+    if (!ALLOWED_EXTENSIONS.includes(originalExt)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Only video files are allowed.' },
+        { status: 400 }
+      )
+    }
+
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
@@ -32,9 +53,10 @@ export async function POST(req: Request) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // Generate unique filename
+    // Generate secure filename with validated extension
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    const filename = `${uniqueSuffix}-${file.name.replace(/\s/g, '-')}`
+    const sanitizedBasename = path.basename(file.name, originalExt).replace(/[^a-zA-Z0-9-_]/g, '_')
+    const filename = `${uniqueSuffix}-${sanitizedBasename}${originalExt}`
     const filepath = path.join(uploadDir, filename)
 
     await writeFile(filepath, buffer)

@@ -101,9 +101,19 @@ export async function PATCH(
 
     const body = await req.json()
     
+    // Only allow updating specific fields
+    const allowedFields = ['title', 'prompt', 'status', 'videoUrl', 'thumbnailUrl', 'duration', 'fileSize'] as const
+    const updateData: Record<string, string | number | undefined> = {}
+    
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        updateData[field] = body[field]
+      }
+    }
+    
     const updatedVideo = await prisma.video.update({
       where: { id },
-      data: body,
+      data: updateData,
     })
 
     return NextResponse.json({ video: updatedVideo })

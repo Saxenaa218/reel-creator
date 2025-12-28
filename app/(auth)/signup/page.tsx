@@ -48,7 +48,7 @@ export default function SignupPage() {
       // Update session
       await update()
       router.push('/dashboard')
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.')
       setLoading(false)
     }

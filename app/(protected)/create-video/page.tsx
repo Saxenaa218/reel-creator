@@ -60,8 +60,9 @@ export default function CreateVideoPage() {
 
       setUploadedFiles(urls)
       setFiles([])
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload files')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload files'
+      setError(errorMessage)
     } finally {
       setUploading(false)
     }
@@ -90,7 +91,7 @@ export default function CreateVideoPage() {
       }
 
       router.push('/dashboard')
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.')
       setCreating(false)
     }
